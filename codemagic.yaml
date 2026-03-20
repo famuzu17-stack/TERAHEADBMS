@@ -1,0 +1,45 @@
+workflows:
+  android-apk:
+    name: Build TERAHEADBMS APK
+    max_build_duration: 30
+    environment:
+      node: 18
+      java: 17
+
+    scripts:
+      - name: Install dependencies
+        script: npm install
+
+      - name: Install Capacitor
+        script: npm install @capacitor/core @capacitor/cli @capacitor/android
+
+      - name: Add Android platform
+        script: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+
+      - name: Sync Capacitor
+        script: npx cap sync android
+
+      - name: Allow HTTP (LAN) traffic
+        script: |
+          mkdir -p android/app/src/main/res/xml
+          cat > android/app/src/main/res/xml/network_security_config.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <network-security-config>
+            <base-config cleartextTrafficPermitted="true">
+              <trust-anchors>
+                <certificates src="system" />
+              </trust-anchors>
+            </base-config>
+          </network-security-config>
+          EOF
+
+      - name: Build Debug APK
+        script: |
+          chmod +x android/gradlew
+          cd android && ./gradlew assembleDebug --no-daemon
+
+    artifacts:
+      - android/app/build/outputs/apk/debug/app-debug.apk
