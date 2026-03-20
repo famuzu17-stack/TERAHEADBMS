@@ -7,6 +7,23 @@ workflows:
       java: 17
 
     scripts:
+      - name: Fix repo structure
+        script: |
+          echo "=== Root contents ==="
+          ls -la
+          # If files are nested in a subfolder, move them to root
+          for dir in TERAHEADBMS-github TERAHEADBMS-v2.0 TERAHEADBMS; do
+            if [ -d "$dir" ]; then
+              echo "Found subfolder: $dir — moving contents to root..."
+              cp -rn "$dir"/. .
+              break
+            fi
+          done
+          echo "=== After fix ==="
+          ls -la
+          echo "=== public/ contents ==="
+          ls public/ || echo "WARNING: public/ still not found"
+
       - name: Install dependencies
         script: npm install
 
@@ -25,7 +42,7 @@ workflows:
       - name: Allow HTTP (LAN) traffic
         script: |
           mkdir -p android/app/src/main/res/xml
-          cat > android/app/src/main/res/xml/network_security_config.xml << 'EOF'
+          cat > android/app/src/main/res/xml/network_security_config.xml << 'XML'
           <?xml version="1.0" encoding="utf-8"?>
           <network-security-config>
             <base-config cleartextTrafficPermitted="true">
@@ -34,7 +51,7 @@ workflows:
               </trust-anchors>
             </base-config>
           </network-security-config>
-          EOF
+          XML
 
       - name: Build Debug APK
         script: |
@@ -43,3 +60,4 @@ workflows:
 
     artifacts:
       - android/app/build/outputs/apk/debug/app-debug.apk
+
