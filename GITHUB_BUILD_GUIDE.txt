@@ -1,0 +1,121 @@
+========================================================
+  TERAHEADBMS — GitHub Actions APK Build Guide
+  Build your Android APK for FREE in the cloud
+========================================================
+
+WHAT YOU NEED
+─────────────
+• A free GitHub account  →  https://github.com/signup
+• Git installed on your PC  →  https://git-scm.com
+  (OR you can upload files manually via the GitHub website)
+
+
+════════════════════════════════════════════════════════
+  STEP 1 — Create a GitHub repository
+════════════════════════════════════════════════════════
+
+1. Go to https://github.com/new
+2. Repository name:  TERAHEADBMS
+3. Set to Private (recommended) or Public
+4. Do NOT check "Add a README" (we already have files)
+5. Click "Create repository"
+
+
+════════════════════════════════════════════════════════
+  STEP 2 — Upload your files to GitHub
+════════════════════════════════════════════════════════
+
+OPTION A — Using Git (command line):
+──────────────────────────────────────
+  Open a terminal inside this folder, then run:
+
+    git init
+    git add .
+    git commit -m "Initial commit"
+    git branch -M main
+    git remote add origin https://github.com/YOUR_USERNAME/TERAHEADBMS.git
+    git push -u origin main
+
+  Replace YOUR_USERNAME with your GitHub username.
+
+OPTION B — Manual upload (no Git needed):
+──────────────────────────────────────────
+  1. On your new GitHub repo page, click "uploading an existing file"
+  2. Drag and drop ALL files and folders from this folder
+     IMPORTANT: Include the hidden .github/ folder!
+     (On Windows, enable "Show hidden items" in File Explorer)
+  3. Click "Commit changes"
+
+
+════════════════════════════════════════════════════════
+  STEP 3 — Watch GitHub build your APK
+════════════════════════════════════════════════════════
+
+1. On your GitHub repo, click the "Actions" tab
+2. You should see "Build Android APK" running (yellow dot)
+3. Wait ~5-10 minutes for it to finish (green checkmark ✅)
+4. If it fails (red ✗), click the job to see the error log
+
+
+════════════════════════════════════════════════════════
+  STEP 4 — Download your APK
+════════════════════════════════════════════════════════
+
+1. Click on the completed workflow run
+2. Scroll down to the "Artifacts" section
+3. Click "TERAHEADBMS-v2.0-debug" to download a ZIP
+4. Extract the ZIP — inside is your  app-debug.apk  🎉
+
+
+════════════════════════════════════════════════════════
+  STEP 5 — Install on your Android phone
+════════════════════════════════════════════════════════
+
+1. Transfer app-debug.apk to your Android phone
+   (via USB, WhatsApp, Google Drive, email, etc.)
+
+2. On your phone, go to:
+   Settings → Security → Install unknown apps
+   Enable it for your file manager or browser
+
+3. Open the APK file and tap "Install"
+
+4. Launch TERAHEADBMS on your phone
+   When prompted, enter the server address:
+   http://YOUR_PC_IP:3000
+   (e.g. http://192.168.1.5:3000)
+
+   Find your PC's IP by running  ipconfig  (Windows)
+   or  ifconfig  (Mac/Linux) in a terminal.
+
+
+════════════════════════════════════════════════════════
+  RE-BUILDING AFTER CHANGES
+════════════════════════════════════════════════════════
+
+Every time you push changes to GitHub (Step 2),
+the APK is automatically rebuilt. Just repeat Step 3-4
+to download the new version.
+
+You can also trigger a build manually:
+  Actions tab → "Build Android APK" → "Run workflow"
+
+
+════════════════════════════════════════════════════════
+  TROUBLESHOOTING
+════════════════════════════════════════════════════════
+
+Build fails with "Gradle error":
+  → Click the failed job → expand the failing step
+    to see the exact error message.
+
+APK installs but can't connect to server:
+  → Make sure your phone and PC are on the same Wi-Fi
+  → Check the IP address is correct
+  → Make sure the server is running (npm start or .exe)
+
+"Install blocked" on phone:
+  → Enable "Install from unknown sources" for your
+    file manager app in Android Settings → Security
+
+========================================================

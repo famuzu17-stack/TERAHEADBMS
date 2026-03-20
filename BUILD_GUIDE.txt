@@ -1,0 +1,122 @@
+========================================================
+  TERAHEADBMS v2.0 — BUILD GUIDE
+  How to compile the .exe (Windows) and .apk (Android)
+========================================================
+
+PREREQUISITES
+─────────────
+• Node.js v18 or later  →  https://nodejs.org
+• Git (optional)
+• For APK: Android Studio  →  https://developer.android.com/studio
+
+
+════════════════════════════════════════════════════════
+  PART 1 — BUILD THE WINDOWS .EXE
+════════════════════════════════════════════════════════
+
+This creates a self-contained Windows desktop app.
+The Express server runs INSIDE Electron — no separate
+Node.js installation is needed on end-user machines.
+
+STEP 1 — Install dependencies
+──────────────────────────────
+  Open a terminal in this folder, then run:
+
+    npm install
+
+STEP 2 — (Optional) Test before building
+──────────────────────────────────────────
+    npm run electron
+
+  You should see the app open in an Electron window.
+  Close it when satisfied.
+
+STEP 3 — Build the Windows installer
+──────────────────────────────────────
+  On a Windows machine (or with Wine on Linux/Mac):
+
+    npm run build:win
+
+  Output files will appear in:  dist/
+  ┌─────────────────────────────────────────────────┐
+  │  dist/TERAHEADBMS Setup 2.0.0.exe   ← Installer │
+  │  dist/TERAHEADBMS 2.0.0.exe         ← Portable  │
+  └─────────────────────────────────────────────────┘
+
+NOTE: electron-builder must run on the TARGET platform
+to produce the best results. For a Windows .exe, run
+the build on a Windows PC. Cross-compilation from
+Mac/Linux is possible but may require extra config.
+
+
+════════════════════════════════════════════════════════
+  PART 2 — BUILD THE ANDROID .APK
+════════════════════════════════════════════════════════
+
+The APK is a mobile CLIENT that connects to a
+TERAHEADBMS server running on the same LAN
+(either the .exe, or `node server.js`).
+
+STEP 1 — Install Capacitor CLI and Android platform
+─────────────────────────────────────────────────────
+  In a terminal in this folder:
+
+    npm install
+    npm install @capacitor/core @capacitor/cli @capacitor/android
+
+STEP 2 — Initialize Capacitor (first time only)
+────────────────────────────────────────────────
+    npx cap init TERAHEADBMS com.terahead.bms --web-dir public
+
+STEP 3 — Add the Android platform
+───────────────────────────────────
+    npx cap add android
+
+STEP 4 — Sync web assets to Android
+──────────────────────────────────────
+    npx cap sync android
+
+STEP 5 — Open in Android Studio and build the APK
+───────────────────────────────────────────────────
+    npx cap open android
+
+  In Android Studio:
+    1. Wait for Gradle sync to complete
+    2. Menu → Build → Build Bundle(s) / APK(s) → Build APK(s)
+    3. APK will appear in:
+       android/app/build/outputs/apk/debug/app-debug.apk
+
+  For a release/signed APK:
+    1. Menu → Build → Generate Signed Bundle / APK
+    2. Follow the wizard to create or select a keystore
+
+
+════════════════════════════════════════════════════════
+  HOW THE .EXE AND .APK WORK TOGETHER
+════════════════════════════════════════════════════════
+
+  ┌─────────────────────┐        LAN (Wi-Fi)
+  │  Windows PC         │◄──────────────────────────┐
+  │  Running .exe       │                           │
+  │  (server + desktop  │                           │
+  │   client on :3000)  │       ┌───────────────────┴──┐
+  └─────────────────────┘       │  Android phone/tablet │
+                                │  Running .apk         │
+                                │  (mobile client)      │
+                                └──────────────────────┘
+
+  The Android app will auto-discover or prompt for the
+  server IP on first launch (e.g. http://192.168.1.5:3000).
+
+
+════════════════════════════════════════════════════════
+  QUICK REFERENCE — NPM SCRIPTS
+════════════════════════════════════════════════════════
+
+  npm start          → Run server only (no Electron window)
+  npm run electron   → Launch in Electron (dev mode)
+  npm run build:win  → Build Windows .exe
+  npm run build:mac  → Build macOS .dmg
+  npm run build:linux→ Build Linux AppImage
+
+========================================================

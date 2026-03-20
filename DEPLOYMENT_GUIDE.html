@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TERAHEADBMS v2.0 — Deployment Guide</title>
+<style>
+  :root{--bg:#0a0c10;--card:#141820;--border:#2a3044;--accent:#4f7cff;--accent2:#7c5cff;--success:#00d4aa;--warning:#ffaa00;--danger:#ff4f6d;--text:#e8ecf4;--text2:#9aa3b8;--text3:#5c677d;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:0 0 60px;}
+  a{color:var(--accent);text-decoration:none;}a:hover{text-decoration:underline;}
+  code{background:#1e2330;color:#00d4aa;padding:2px 7px;border-radius:4px;font-family:'Cascadia Code','Consolas',monospace;font-size:0.9em;}
+  pre{background:#111318;border:1px solid var(--border);border-radius:8px;padding:16px;overflow-x:auto;font-family:'Cascadia Code','Consolas',monospace;font-size:13px;line-height:1.7;color:#c8d0e4;}
+  pre .cmd{color:#00d4aa;}pre .comment{color:#5c677d;}pre .path{color:#ffaa00;}
+
+  /* Header */
+  .hero{background:linear-gradient(135deg,#0d1a3a 0%,#0a0c10 60%);border-bottom:1px solid var(--border);padding:48px 40px 40px;text-align:center;}
+  .hero-icon{font-size:64px;line-height:1;margin-bottom:12px;}
+  .hero h1{font-size:36px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-1px;}
+  .hero p{color:var(--text2);font-size:15px;margin-top:8px;}
+  .version-badge{display:inline-block;background:rgba(79,124,255,0.15);border:1px solid rgba(79,124,255,0.4);color:var(--accent);border-radius:20px;padding:4px 16px;font-size:13px;font-weight:700;margin-top:10px;}
+
+  /* Layout */
+  .container{max-width:860px;margin:0 auto;padding:0 24px;}
+  .section{margin-top:40px;}
+  h2{font-size:22px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+  h2 .num{background:var(--accent);color:#fff;border-radius:50%;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+  h3{font-size:15px;font-weight:700;margin:20px 0 8px;color:var(--text2);}
+
+  /* Cards */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:12px;}
+  .card-title{font-weight:700;font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+  .step-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media(max-width:600px){.step-grid{grid-template-columns:1fr;}}
+
+  /* Status items */
+  .check-list{list-style:none;font-size:13px;}
+  .check-list li{padding:7px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;}
+  .check-list li:last-child{border-bottom:none;}
+  .badge{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700;}
+  .badge-green{background:rgba(0,212,170,0.15);color:var(--success);}
+  .badge-red{background:rgba(255,79,109,0.15);color:var(--danger);}
+  .badge-yellow{background:rgba(255,170,0,0.15);color:var(--warning);}
+
+  /* Diag fix box */
+  .fix-box{background:#0d1520;border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 16px;margin:10px 0;font-size:13px;}
+  .fix-box strong{color:var(--accent);}
+
+  /* Tabs */
+  .os-tabs{display:flex;gap:6px;margin-bottom:0;}
+  .os-tab{padding:8px 16px;border:1px solid var(--border);border-radius:8px 8px 0 0;background:var(--card);cursor:pointer;font-size:13px;font-weight:600;color:var(--text2);}
+  .os-tab.active{background:#1e2740;border-bottom-color:#1e2740;color:var(--accent);}
+  .os-content{display:none;background:#111318;border:1px solid var(--border);border-radius:0 8px 8px 8px;padding:20px;}
+  .os-content.active{display:block;}
+
+  /* Alert */
+  .alert{border-radius:8px;padding:12px 16px;font-size:13px;margin:12px 0;display:flex;gap:10px;align-items:flex-start;}
+  .alert-info{background:rgba(79,124,255,0.1);border:1px solid rgba(79,124,255,0.3);}
+  .alert-warn{background:rgba(255,170,0,0.1);border:1px solid rgba(255,170,0,0.3);}
+  .alert-success{background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.3);}
+  .alert-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+
+  /* File tree */
+  .file-tree{background:#0d1520;border:1px solid var(--border);border-radius:8px;padding:16px 20px;font-family:'Cascadia Code','Consolas',monospace;font-size:13px;line-height:2;}
+  .ft-dir{color:var(--warning);}
+  .ft-file{color:var(--text2);}
+  .ft-html{color:var(--success);}
+  .ft-bat{color:#ff9955;}
+  .ft-note{color:var(--text3);font-size:11px;}
+
+  /* TOC */
+  .toc{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-top:32px;}
+  .toc h3{margin:0 0 10px;font-size:14px;color:var(--text2);}
+  .toc ol{padding-left:20px;font-size:13px;line-height:2.2;}
+
+  hr{border:none;border-top:1px solid var(--border);margin:32px 0;}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-icon">♠️</div>
+  <h1>TERAHEADBMS</h1>
+  <p>Point of Sale &amp; Business Management System</p>
+  <div class="version-badge">v2.0 — Deployment Guide</div>
+</div>
+
+<div class="container">
+
+  <div class="toc">
+    <h3>📋 Contents</h3>
+    <ol>
+      <li><a href="#files">What's in this package</a></li>
+      <li><a href="#standalone">Standalone mode (single device, no install)</a></li>
+      <li><a href="#server">Server mode (multi-device, LAN sharing)</a></li>
+      <li><a href="#pwa">Installing as a PWA (desktop/mobile app)</a></li>
+      <li><a href="#diag">Fixing PWA Diagnostics errors</a></li>
+      <li><a href="#data">Data, backup &amp; migration</a></li>
+      <li><a href="#faq">Troubleshooting FAQ</a></li>
+    </ol>
+  </div>
+
+  <!-- ── SECTION 1: FILES ── -->
+  <div class="section" id="files">
+    <h2><span class="num">1</span> What's in this package</h2>
+    <div class="file-tree">
+      <div><span class="ft-dir">TERAHEADBMS-v2.0/</span></div>
+      <div>&nbsp;&nbsp;├── <span class="ft-bat">server.bat</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="ft-note">← Windows: double-click to start</span></div>
+      <div>&nbsp;&nbsp;├── <span class="ft-bat">server.sh</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="ft-note">← macOS/Linux: run in terminal</span></div>
+      <div>&nbsp;&nbsp;├── <span class="ft-file">server.js</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="ft-note">← Node.js server (don't edit unless needed)</span></div>
+      <div>&nbsp;&nbsp;├── <span class="ft-file">package.json</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="ft-note">← npm dependencies list (just Express)</span></div>
+      <div>&nbsp;&nbsp;├── <span class="ft-file">DEPLOYMENT_GUIDE.html</span> &nbsp; <span class="ft-note">← This file</span></div>
+      <div>&nbsp;&nbsp;├── <span class="ft-file">README.txt</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="ft-note">← Quick reference</span></div>
+      <div>&nbsp;&nbsp;└── <span class="ft-dir">public/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="ft-note">← Everything the browser loads</span></div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <span class="ft-html">index.html</span> &nbsp;&nbsp;&nbsp;&nbsp; <span class="ft-note">← The full app (open this for standalone)</span></div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <span class="ft-file">sw.js</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="ft-note">← Service worker (offline/PWA support)</span></div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <span class="ft-file">manifest.json</span> &nbsp; <span class="ft-note">← PWA manifest (name, icons, shortcuts)</span></div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <span class="ft-file">icon.svg</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="ft-note">← Master SVG icon</span></div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── <span class="ft-file">icon-72/96/128/192/512.png</span> &nbsp; <span class="ft-note">← PWA icon sizes</span></div>
+    </div>
+    <div class="alert alert-warn" style="margin-top:12px;">
+      <span class="alert-icon">⚠️</span>
+      <span>Do <strong>not</strong> move <code>index.html</code> out of the <code>public/</code> folder — the server expects it there. The <code>sw.js</code>, <code>manifest.json</code> and icons must also stay in <code>public/</code>.</span>
+    </div>
+  </div>
+
+  <!-- ── SECTION 2: STANDALONE ── -->
+  <div class="section" id="standalone">
+    <h2><span class="num">2</span> Standalone mode (single device, no install)</h2>
+    <div class="card">
+      <div class="card-title">🗂️ Just open the file</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px;">For a single device with no network sharing needed, you can open the app directly.</p>
+      <p style="font-size:13px;"><strong>Open:</strong> <code>public/index.html</code> in Chrome or Edge</p>
+      <div class="alert alert-warn" style="margin-top:12px;">
+        <span class="alert-icon">⚠️</span>
+        <span>In standalone mode the <strong>PWA install button will not work</strong> and some features (manifest, service worker) require the server. Data is saved in your browser's IndexedDB. For full PWA support, use Server Mode below.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 3: SERVER ── -->
+  <div class="section" id="server">
+    <h2><span class="num">3</span> Server mode (recommended — multi-device + PWA)</h2>
+
+    <div class="alert alert-success">
+      <span class="alert-icon">✅</span>
+      <span>Server mode fixes <strong>all</strong> PWA diagnostic errors. It gives you HTTPS-equivalent localhost, a working manifest, a controlled service worker, and real-time sync across all devices on your Wi-Fi.</span>
+    </div>
+
+    <h3>Prerequisites — Install Node.js first</h3>
+    <div class="card">
+      <div class="card-title">📦 Node.js (required, free)</div>
+      <ol style="font-size:13px;padding-left:18px;line-height:2.2;">
+        <li>Go to <a href="https://nodejs.org" target="_blank">https://nodejs.org</a></li>
+        <li>Download the <strong>LTS version</strong> (e.g. 20.x LTS)</li>
+        <li>Run the installer — click <strong>Next</strong> through all steps</li>
+        <li>Make sure <strong>"Add to PATH"</strong> is ticked (it is by default)</li>
+        <li>Finish the installer, then <strong>restart your computer</strong> once</li>
+      </ol>
+      <div class="alert alert-info" style="margin-top:10px;">
+        <span class="alert-icon">ℹ️</span>
+        <span>To verify Node.js is installed: open Command Prompt and type <code>node -v</code>. You should see something like <code>v20.11.0</code>.</span>
+      </div>
+    </div>
+
+    <h3>Starting the server</h3>
+    <div class="os-tabs">
+      <div class="os-tab active" onclick="switchOS('win',this)">🪟 Windows</div>
+      <div class="os-tab" onclick="switchOS('mac',this)">🍎 macOS</div>
+      <div class="os-tab" onclick="switchOS('linux',this)">🐧 Linux</div>
+    </div>
+
+    <div id="os-win" class="os-content active">
+      <p style="font-size:13px;margin-bottom:12px;color:var(--text2);">Everything is automated — one double-click is all you need.</p>
+      <ol style="font-size:13px;padding-left:18px;line-height:2.4;">
+        <li>Open the <code>TERAHEADBMS-v2.0</code> folder</li>
+        <li>Double-click <strong><code>server.bat</code></strong></li>
+        <li>First run: it installs Express automatically (~30 sec, needs internet once)</li>
+        <li>Your browser opens at <code>http://localhost:3000</code> automatically</li>
+        <li>Keep the black terminal window open while using the app</li>
+        <li>To stop: click the terminal window and press <strong>Ctrl+C</strong></li>
+      </ol>
+      <div class="alert alert-warn" style="margin-top:10px;">
+        <span class="alert-icon">⚠️</span>
+        <span>Windows may show a SmartScreen warning ("Unknown publisher"). Click <strong>More info → Run anyway</strong>. This is normal for unsigned .bat files.</span>
+      </div>
+      <div class="alert alert-info" style="margin-top:8px;">
+        <span class="alert-icon">💡</span>
+        <span>To start the server automatically on Windows startup: Right-click <code>server.bat</code> → Create shortcut → Press <strong>Win+R</strong>, type <code>shell:startup</code>, move the shortcut into that folder.</span>
+      </div>
+    </div>
+
+    <div id="os-mac" class="os-content">
+      <pre><span class="comment"># Open Terminal (Spotlight → Terminal)</span>
+<span class="comment"># Navigate to the folder</span>
+<span class="cmd">cd</span> <span class="path">~/Downloads/TERAHEADBMS-v2.0</span>
+
+<span class="comment"># Make the script executable (first time only)</span>
+<span class="cmd">chmod +x</span> server.sh
+
+<span class="comment"># Start the server</span>
+<span class="cmd">./server.sh</span></pre>
+      <p style="font-size:12px;color:var(--text3);margin-top:8px;">First run installs Express (~30 sec). Browser opens automatically at http://localhost:3000</p>
+    </div>
+
+    <div id="os-linux" class="os-content">
+      <pre><span class="comment"># Open a terminal and navigate to the folder</span>
+<span class="cmd">cd</span> <span class="path">~/TERAHEADBMS-v2.0</span>
+
+<span class="comment"># Make the script executable (first time only)</span>
+<span class="cmd">chmod +x</span> server.sh
+
+<span class="comment"># Start the server</span>
+<span class="cmd">./server.sh</span>
+
+<span class="comment"># Or start directly with node</span>
+<span class="cmd">node</span> server.js</pre>
+    </div>
+
+    <h3>Connecting from other devices (phones, tablets, other PCs)</h3>
+    <div class="card">
+      <p style="font-size:13px;margin-bottom:10px;">When the server starts, it prints your LAN IP addresses. Open one of those on any device on the same Wi-Fi.</p>
+      <pre><span class="comment"># Example server output:</span>
+  Local:    http://localhost:3000
+  Network:  <span class="cmd">http://192.168.1.45:3000</span>   ← type this on other devices</pre>
+      <ul style="font-size:13px;padding-left:18px;margin-top:10px;line-height:2.2;">
+        <li>All devices must be on the <strong>same Wi-Fi network</strong></li>
+        <li>Changes on one device appear on all others in real-time</li>
+        <li>The 🌐 Network badge in the top bar confirms server mode is active</li>
+        <li>If other devices can't connect, check Windows Firewall (see FAQ)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── SECTION 4: PWA ── -->
+  <div class="section" id="pwa">
+    <h2><span class="num">4</span> Installing as a PWA (desktop / mobile app)</h2>
+    <div class="alert alert-info">
+      <span class="alert-icon">ℹ️</span>
+      <span>PWA install requires the server to be running (localhost or HTTPS). It does NOT work with <code>file://</code> URLs.</span>
+    </div>
+    <div class="step-grid" style="margin-top:14px;">
+      <div class="card">
+        <div class="card-title">🖥️ Desktop (Windows / Mac)</div>
+        <ol style="font-size:13px;padding-left:18px;line-height:2.2;">
+          <li>Start the server via <code>server.bat</code></li>
+          <li>Open Chrome or Edge at <code>http://localhost:3000</code></li>
+          <li>Click <strong>📲 Install</strong> in the top bar<br><em>or</em> use browser menu (⋮) → <strong>"Install TERAHEADBMS"</strong></li>
+          <li>App appears in Start Menu / taskbar / Dock</li>
+        </ol>
+      </div>
+      <div class="card">
+        <div class="card-title">📱 Android</div>
+        <ol style="font-size:13px;padding-left:18px;line-height:2.2;">
+          <li>Connect phone to same Wi-Fi as the PC running the server</li>
+          <li>Open Chrome on phone</li>
+          <li>Go to <code>http://&lt;your-PC-IP&gt;:3000</code></li>
+          <li>Tap browser menu (⋮) → <strong>"Add to Home Screen"</strong></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 5: DIAGNOSTICS FIX ── -->
+  <div class="section" id="diag">
+    <h2><span class="num">5</span> Fixing PWA Diagnostics errors</h2>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:14px;">Open the diagnostics via <strong>Settings → PWA Diagnostics</strong>. Here's what each error means and how to fix it:</p>
+
+    <div class="card">
+      <ul class="check-list">
+
+        <li>
+          <span class="badge badge-red">❌</span>
+          <div>
+            <strong>Protocol: file: — Needs HTTPS or localhost</strong>
+            <div class="fix-box">
+              <strong>Fix:</strong> You opened <code>index.html</code> directly. Instead, run <code>server.bat</code> and open <code>http://localhost:3000</code> in Chrome.<br>
+              Once you do this, this check turns ✅ automatically.
+            </div>
+          </div>
+        </li>
+
+        <li>
+          <span class="badge badge-yellow">⚠️</span>
+          <div>
+            <strong>Service Worker: Registered, not controlling yet</strong>
+            <div class="fix-box">
+              <strong>Fix:</strong> This happens on the very first load. The app automatically reloads itself once to let the SW take control. If it persists: press <strong>Ctrl+Shift+R</strong> (hard reload) once, then open normally.
+            </div>
+          </div>
+        </li>
+
+        <li>
+          <span class="badge badge-red">❌</span>
+          <div>
+            <strong>Manifest: Not found at /manifest.json</strong>
+            <div class="fix-box">
+              <strong>Fix:</strong> Only works when served via the server. Run <code>server.bat</code> → open <code>http://localhost:3000</code>. The manifest is at <code>public/manifest.json</code> and is served automatically.
+            </div>
+          </div>
+        </li>
+
+        <li>
+          <span class="badge badge-yellow">⚠️</span>
+          <div>
+            <strong>Install event captured: Not yet</strong>
+            <div class="fix-box">
+              <strong>Fix:</strong> This resolves automatically once protocol and manifest are both ✅. After running the server and reloading once, the 📲 Install button appears in the top bar within a few seconds.
+            </div>
+          </div>
+        </li>
+
+        <li>
+          <span class="badge badge-green">✅</span>
+          <div>
+            <strong>Browser: Chrome ✅</strong>
+            <div style="font-size:12px;color:var(--text3);margin-top:3px;">Already correct. Chrome and Edge both support PWA install fully.</div>
+          </div>
+        </li>
+
+      </ul>
+    </div>
+
+    <div class="alert alert-success" style="margin-top:12px;">
+      <span class="alert-icon">🎯</span>
+      <span><strong>Summary:</strong> All 5 diagnostics pass automatically once you run <code>server.bat</code> and open <code>http://localhost:3000</code> in Chrome. No other configuration needed.</span>
+    </div>
+  </div>
+
+  <!-- ── SECTION 6: DATA ── -->
+  <div class="section" id="data">
+    <h2><span class="num">6</span> Data, backup &amp; migration</h2>
+    <div class="step-grid">
+      <div class="card">
+        <div class="card-title">💾 Where data lives</div>
+        <ul class="check-list" style="font-size:13px;">
+          <li><span style="font-size:16px;">🌐</span><span><strong>Server mode:</strong><br><code>thbms_data.json</code> in the server folder. Back this file up regularly.</span></li>
+          <li><span style="font-size:16px;">💻</span><span><strong>Standalone mode:</strong><br>Browser IndexedDB (lives inside Chrome profile). Use Settings → Backup to export a portable JSON.</span></li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">♻️ Migration (local → server)</div>
+        <p style="font-size:13px;color:var(--text2);">If you used the app standalone before, your local IndexedDB data is <strong>automatically migrated</strong> to the server on first login. No data is lost.</p>
+        <div class="alert alert-info" style="margin-top:10px;">
+          <span class="alert-icon">💡</span>
+          <span>If migration doesn't happen automatically: export a backup from Settings while in standalone mode, then restore it from Settings after launching the server.</span>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:0;">
+      <div class="card-title">📦 Regular backups</div>
+      <ul style="font-size:13px;padding-left:18px;line-height:2.2;">
+        <li>Go to <strong>Settings → Storage &amp; Backup → Download Full Backup</strong> regularly</li>
+        <li>A reminder banner appears every 90 days if you haven't backed up</li>
+        <li>Connect <strong>Google Drive</strong> in Settings for automatic cloud backups</li>
+        <li>To restore: Settings → Restore from Backup → select your .json file</li>
+        <li>Restores are <strong>merge-safe</strong> — they add missing data without deleting anything</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── SECTION 7: FAQ ── -->
+  <div class="section" id="faq">
+    <h2><span class="num">7</span> Troubleshooting FAQ</h2>
+
+    <details class="card" style="cursor:pointer;" open>
+      <summary style="font-weight:700;font-size:14px;list-style:none;display:flex;justify-content:space-between;">
+        <span>📲 Install button still not appearing after running server.bat</span><span style="color:var(--text3);">▾</span>
+      </summary>
+      <div style="margin-top:12px;font-size:13px;color:var(--text2);">
+        <ol style="padding-left:18px;line-height:2.4;">
+          <li>Make sure you opened <code>http://localhost:3000</code> in Chrome or Edge (not Firefox/Safari)</li>
+          <li>Press <strong>Ctrl+Shift+R</strong> once to hard-reload</li>
+          <li>Wait 5 seconds — the install event fires after the SW registers</li>
+          <li>Check Settings → PWA Diagnostics — all 5 checks should now be ✅</li>
+          <li>If the app is already installed, uninstall it first (the button disappears when installed)</li>
+          <li>Try opening in an Incognito window — some Chrome flags can block install events</li>
+        </ol>
+      </div>
+    </details>
+
+    <details class="card" style="cursor:pointer;margin-top:8px;">
+      <summary style="font-weight:700;font-size:14px;list-style:none;display:flex;justify-content:space-between;">
+        <span>🔥 Windows Firewall blocking other devices</span><span style="color:var(--text3);">▾</span>
+      </summary>
+      <div style="margin-top:12px;font-size:13px;color:var(--text2);">
+        <p>When the server starts for the first time, Windows asks if Node.js should be allowed on the network. Click <strong>Allow Access</strong>.</p>
+        <p style="margin-top:8px;">If you missed that prompt:</p>
+        <ol style="padding-left:18px;line-height:2.4;margin-top:8px;">
+          <li>Open <strong>Windows Defender Firewall</strong> (search in Start Menu)</li>
+          <li>Click <strong>Allow an app through firewall</strong></li>
+          <li>Find <strong>Node.js</strong> → tick both Private and Public</li>
+          <li>Or run this in an admin Command Prompt:<br><code>netsh advfirewall firewall add rule name="Node THBMS" dir=in action=allow protocol=TCP localport=3000</code></li>
+        </ol>
+      </div>
+    </details>
+
+    <details class="card" style="cursor:pointer;margin-top:8px;">
+      <summary style="font-weight:700;font-size:14px;list-style:none;display:flex;justify-content:space-between;">
+        <span>⚡ Port 3000 already in use</span><span style="color:var(--text3);">▾</span>
+      </summary>
+      <div style="margin-top:12px;font-size:13px;color:var(--text2);">
+        <p>Another program is using port 3000. To change the port:</p>
+        <ol style="padding-left:18px;line-height:2.4;margin-top:8px;">
+          <li>Open <code>server.js</code> in Notepad</li>
+          <li>Find line: <code>const PORT = process.env.PORT || 3000;</code></li>
+          <li>Change <code>3000</code> to another number, e.g. <code>3001</code></li>
+          <li>Save and restart server.bat</li>
+          <li>Access the app at <code>http://localhost:3001</code></li>
+        </ol>
+      </div>
+    </details>
+
+    <details class="card" style="cursor:pointer;margin-top:8px;">
+      <summary style="font-weight:700;font-size:14px;list-style:none;display:flex;justify-content:space-between;">
+        <span>💾 Data disappeared after restarting server</span><span style="color:var(--text3);">▾</span>
+      </summary>
+      <div style="margin-top:12px;font-size:13px;color:var(--text2);">
+        <p>Check if <code>thbms_data.json</code> exists in the server folder. If it's empty or missing:</p>
+        <ul style="padding-left:18px;line-height:2.4;margin-top:8px;">
+          <li>Log in — the app will automatically check your local IndexedDB and migrate data to the server</li>
+          <li>If you have a backup JSON, restore it via Settings → Restore from Backup</li>
+          <li>Prevent this: keep a regular backup (Settings → Download Full Backup)</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="card" style="cursor:pointer;margin-top:8px;">
+      <summary style="font-weight:700;font-size:14px;list-style:none;display:flex;justify-content:space-between;">
+        <span>🔄 How to update to a new version of TERAHEADBMS</span><span style="color:var(--text3);">▾</span>
+      </summary>
+      <div style="margin-top:12px;font-size:13px;color:var(--text2);">
+        <ol style="padding-left:18px;line-height:2.4;">
+          <li>Stop the server (Ctrl+C)</li>
+          <li><strong>Keep</strong> <code>thbms_data.json</code> — do not delete it</li>
+          <li>Replace <code>public/index.html</code> with the new version's HTML file</li>
+          <li>Restart <code>server.bat</code></li>
+          <li>Press <strong>Ctrl+Shift+R</strong> in the browser once to clear the old cached app</li>
+        </ol>
+      </div>
+    </details>
+
+    <details class="card" style="cursor:pointer;margin-top:8px;">
+      <summary style="font-weight:700;font-size:14px;list-style:none;display:flex;justify-content:space-between;">
+        <span>🖨️ Setting up a thermal printer (QZ Tray)</span><span style="color:var(--text3);">▾</span>
+      </summary>
+      <div style="margin-top:12px;font-size:13px;color:var(--text2);">
+        <ol style="padding-left:18px;line-height:2.4;">
+          <li>Download and install QZ Tray from <a href="https://qz.io" target="_blank">qz.io</a></li>
+          <li>Run QZ Tray (it appears in the system tray)</li>
+          <li>In TERAHEADBMS, go to POS → complete a sale → receipt appears</li>
+          <li>Click the 🖨️ Print button — you'll be prompted to select a printer</li>
+          <li>Click "Save as default" to avoid the picker next time</li>
+          <li>You can also set the default printer in Settings → QZ Tray Printer</li>
+        </ol>
+      </div>
+    </details>
+
+  </div>
+
+  <hr>
+  <div style="text-align:center;font-size:12px;color:var(--text3);padding-bottom:20px;">
+    TERAHEADBMS v2.0 &nbsp;·&nbsp; All data stored on your own device &nbsp;·&nbsp; Built with ♠️
+  </div>
+
+</div>
+
+<script>
+function switchOS(os, btn) {
+  document.querySelectorAll('.os-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.os-content').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('os-'+os).classList.add('active');
+}
+// Open all details on load for printing
+document.querySelectorAll('details').forEach(d=>d.open=false);
+</script>
+</body>
+</html>

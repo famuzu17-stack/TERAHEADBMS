@@ -1,0 +1,22 @@
+{
+  "appId": "com.terahead.bms",
+  "appName": "TERAHEADBMS",
+  "webDir": "public",
+  "server": {
+    "androidScheme": "http",
+    "allowNavigation": [
+      "http://192.168.*.*",
+      "http://10.*.*.*",
+      "http://172.16.*.*",
+      "http://localhost:3000"
+    ]
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#1a1a2e",
+      "showSpinner": true,
+      "spinnerColor": "#4fc3f7"
+    }
+  }
+}
