@@ -1,0 +1,58 @@
+workflows:
+  android-apk:
+    name: Build TERAHEADBMS APK
+    max_build_duration: 30
+    environment:
+      node: 18
+      java: 11
+
+    scripts:
+      - name: Install dependencies
+        script: npm install
+
+      - name: Install Capacitor
+        script: npm install @capacitor/core @capacitor/cli @capacitor/android
+
+      - name: Add Android platform
+        script: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+
+      - name: Sync Capacitor
+        script: npx cap sync android
+
+      - name: Allow HTTP (LAN) traffic
+        script: |
+          mkdir -p android/app/src/main/res/xml
+          cat > android/app/src/main/res/xml/network_security_config.xml << 'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <network-security-config>
+            <base-config cleartextTrafficPermitted="true">
+              <trust-anchors>
+                <certificates src="system" />
+              </trust-anchors>
+            </base-config>
+          </network-security-config>
+          XML
+
+      - name: Fix Gradle properties
+        script: |
+          GRADLE_PROPS="android/gradle.properties"
+          echo "" >> $GRADLE_PROPS
+          echo "org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8" >> $GRADLE_PROPS
+          echo "org.gradle.daemon=false" >> $GRADLE_PROPS
+          echo "org.gradle.parallel=false" >> $GRADLE_PROPS
+          echo "org.gradle.caching=false" >> $GRADLE_PROPS
+          echo "android.useAndroidX=true" >> $GRADLE_PROPS
+          echo "android.enableJetifier=true" >> $GRADLE_PROPS
+
+      - name: Build Debug APK
+        script: |
+          chmod +x android/gradlew
+          cd android
+          ./gradlew clean
+          ./gradlew assembleDebug --no-daemon --no-build-cache
+
+    artifacts:
+      - android/app/build/outputs/apk/debug/app-debug.apk
